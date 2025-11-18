@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 # Copier les fichiers requirements.txt si tu en as
-COPY requirements.txt /app/requirements.txt
+#COPY requirements.txt /app/requirements.txt
 
 # Installer les dépendances système nécessaires
 RUN apt-get update && \
@@ -23,9 +23,9 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Installer pip, pytest et semgrep
-RUN python3 -m pip install --upgrade pip setuptools wheel && \
-    pip install pytest semgrep && \
-    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+#RUN python3 -m pip install --upgrade pip setuptools wheel && \
+ #   pip install pytest semgrep && \
+  #  if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # Copier le code source dans l'image
 COPY . /app
