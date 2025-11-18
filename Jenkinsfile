@@ -1,27 +1,68 @@
 pipeline {
     agent any
+
+    environment {
+        APP_NAME = "monapp"
+        APP_PORT = "5000"
+    }
+
     stages {
-        stage('Clone') {
+        stage('Clone Git') {
             steps {
-                git url: 'https://github.com/emmanueleffa/validation.git', branch: 'main'
+                echo 'Clonage du dépôt Git...'
+                git branch: 'main', url: 'https://github.com/emmanueleffa/validation.git'
             }
         }
-        stage('Build') {
+
+        stage('Build Docker') {
             steps {
-                echo 'Compilation du projet...'
+                echo 'Construction de l’image Docker...'
+                sh 'docker build -t ${APP_NAME}:latest .'
             }
         }
-        stage('Test') {
+        
+        stage('Run Tests') {
             steps {
-                echo 'Tests unitaires...'
+                // Lancer les tests à l’intérieur du conteneur
+                sh 'docker run --rm monapp:latest pytest tests/'
             }
         }
-        stage('Deploy') {
+
+        stage('Free Port if occupied') {
             steps {
-                echo 'Déploiement...'
-                sh 'docker build -t monapp:latest .'
-                sh 'docker run -d -p 5000:5000 monapp:latest'
+                echo "Vérification et libération du port ${APP_PORT}..."
+                // Arrête tous les conteneurs qui utilisent ce port
+                sh "docker ps --filter publish=${APP_PORT} --format '{{.ID}}' | xargs -r docker stop"
+                sh "docker ps -a --filter name=${APP_NAME} --format '{{.ID}}' | xargs -r docker rm"
+            }
+        }
+
+        stage('Run Docker') {
+            steps {
+                echo "Lancement du conteneur Docker..."
+                sh "docker run -d --name ${APP_NAME} -p ${APP_PORT}:${APP_PORT} ${APP_NAME}:latest"
+            }
+        }
+
+        // Si tu veux lancer Semgrep (installé globalement sur le serveur Jenkins)
+        stage('Run Semgrep Scan') {
+            steps {
+                echo "Lancement du scan Semgrep..."
+                sh 'semgrep --config=auto . || true'
             }
         }
     }
+
+    post {
+        always {
+            echo "Pipeline terminé."
+        }
+        success {
+            echo "La pipeline a réussi ✅"
+        }
+        failure {
+            echo "La pipeline a échoué ❌"
+        }
+    }
 }
+
