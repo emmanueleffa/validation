@@ -11,3 +11,7 @@ class Handler(SimpleHTTPRequestHandler):
 with HTTPServer(("", PORT), Handler) as httpd:
     print(f"Server started at http://localhost:{PORT}")
     httpd.serve_forever()
+
+# tests/test_app.py
+def test_example():
+    assert 1 + 1 == 2
